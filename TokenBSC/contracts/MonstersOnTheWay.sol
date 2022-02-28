@@ -7,18 +7,17 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-/**
- */
-contract Shards is ERC20, Ownable, ERC20Burnable, Pausable {
+contract MonstersOnTheWay is ERC20, Ownable, ERC20Burnable, Pausable {
 
     uint128 private MAX_NUMBER_OF_TOKENS_MINTABLE = 21000000000000;
     uint32 private INITALLY_MINTED_TOKENS = 1000000000;
     uint8 private DECIMALS = 6;
     address private addressOfTheOwner = 0xeac9852225Aa941Fa8EA2E949e733e2329f42195;
     bytes32[] private hashesUsed;
+    mapping(bytes32 => bool) private hashBook;
 
-    string private NAME_OF_TOKEN = "Shard";
-    string private SYMBOL_OF_TOKEN = "SHR";
+    string private NAME_OF_TOKEN = "Promethium";
+    string private SYMBOL_OF_TOKEN = "PRM";
     
 
     constructor() ERC20(NAME_OF_TOKEN, SYMBOL_OF_TOKEN) {
@@ -42,14 +41,12 @@ contract Shards is ERC20, Ownable, ERC20Burnable, Pausable {
         require(ECDSA.recover(_hash, _signature) == addressOfTheOwner, "This mint was not signed by the owner");
         bool wasThisHashUsed = false;
         
-        for(uint i = 0; i < hashesUsed.length; i++) {
-            if(hashesUsed[i] == _hash) {
-                wasThisHashUsed = true;
-            }
+        if(hashBook[_hash]) {
+            wasThisHashUsed = true;
         }
 
         require(wasThisHashUsed == false, "This code was aleady cleared!");
-        hashesUsed.push(_hash);
+        hashBook[_hash] = true;
 
         string memory hashConverted = toHex(_hash);
         uint amount = extractNumberOfTokensFromHash(hashConverted);
@@ -111,6 +108,10 @@ contract Shards is ERC20, Ownable, ERC20Burnable, Pausable {
         uint tokens = st2num(resultToConvert);
 
         return tokens;
+    }
+
+    function isCodeValid(bytes32 _hash) public view returns(bool) {
+        return hashBook[_hash];
     }
 
     /*
