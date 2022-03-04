@@ -15,6 +15,7 @@ contract MonstersOnTheWayCards is ERC721, ERC721URIStorage, Pausable, Ownable, E
     uint256 private _fee;
     address payable _owner;
     uint256 private _balanceOfContract;
+    string[] private _bookOfUris;
 
     Counters.Counter private _tokenIdCounter;
 
@@ -37,6 +38,7 @@ contract MonstersOnTheWayCards is ERC721, ERC721URIStorage, Pausable, Ownable, E
 
     function safeMint(string memory uri) external payable {
         require(msg.value >= _fee, "Not enough funds to mint");
+        _bookOfUris.push(uri);
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(_msgSender(), tokenId);
@@ -83,5 +85,9 @@ contract MonstersOnTheWayCards is ERC721, ERC721URIStorage, Pausable, Ownable, E
 
     function setFee(uint256 fee) public onlyOwner {
         _fee = fee;
+    }
+
+    function getCids() public view returns(string[] memory) {
+        return _bookOfUris;
     }
 }

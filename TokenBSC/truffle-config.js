@@ -36,7 +36,7 @@ module.exports = {
    *
    * $ truffle test --network <network-name>
    */
-
+  
   networks: {
     testnet: {
       provider: () => new HDWalletProvider(mnemonic, `https://data-seed-prebsc-1-s1.binance.org:8545`),
@@ -56,7 +56,8 @@ module.exports = {
           shareNonce: true,
         }),
       network_id: '4',
-    }
+    },
+    
     // Useful for testing. The `development` name is special - truffle uses it by default
     // if it's defined here and no other network is specified at the command line.
     // You should run a client (like ganache-cli, geth or parity) in a separate terminal
@@ -95,10 +96,6 @@ module.exports = {
     // }
   },
 
-  // Set default mocha options here, use special reporters etc.
-  mocha: {
-    // timeout: 100000
-  },
   plugins: [
     'truffle-plugin-verify'
   ],
@@ -106,6 +103,13 @@ module.exports = {
     etherscan: "ZZ5GTHSIWP16K6ZKRH2YB3YER7J2Y5HKSK",
     bscscan: "V3SZBJ3PKP5XHMV7RF8S6F8T6XP1RZ5E7Y"
   },
+
+
+  // Set default mocha options here, use special reporters etc.
+  mocha: {
+    // timeout: 100000
+  },
+  
 
   // Configure your compilers
   compilers: {

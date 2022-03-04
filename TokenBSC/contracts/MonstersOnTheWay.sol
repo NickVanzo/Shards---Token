@@ -13,7 +13,7 @@ contract MonstersOnTheWay is ERC20, Ownable, ERC20Burnable, Pausable {
     uint32 private INITALLY_MINTED_TOKENS = 1000000000;
     uint8 private DECIMALS = 6;
     address private addressOfTheOwner = 0xeac9852225Aa941Fa8EA2E949e733e2329f42195;
-    bytes32[] private hashesUsed;
+
     mapping(bytes32 => bool) private hashBook;
 
     string private NAME_OF_TOKEN = "Promethium";
@@ -39,13 +39,8 @@ contract MonstersOnTheWay is ERC20, Ownable, ERC20Burnable, Pausable {
     function mint(bytes32 _hash, bytes memory _signature) public {
         require(totalSupply() <= MAX_NUMBER_OF_TOKENS_MINTABLE, "Tokens cannot minted anymore, cap reached");
         require(ECDSA.recover(_hash, _signature) == addressOfTheOwner, "This mint was not signed by the owner");
-        bool wasThisHashUsed = false;
+        require(!hashBook[_hash], "This code was already redeemed");
         
-        if(hashBook[_hash]) {
-            wasThisHashUsed = true;
-        }
-
-        require(wasThisHashUsed == false, "This code was aleady cleared!");
         hashBook[_hash] = true;
 
         string memory hashConverted = toHex(_hash);
