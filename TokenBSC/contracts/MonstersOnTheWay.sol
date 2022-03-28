@@ -6,22 +6,30 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract MonstersOnTheWay is ERC20, Ownable, ERC20Burnable, Pausable {
+    
+    using SafeMath for uint256;
 
     uint128 private MAX_NUMBER_OF_TOKENS_MINTABLE = 21000000000000;
     uint32 private INITALLY_MINTED_TOKENS = 1000000000;
     uint8 private DECIMALS = 6;
     address private addressOfTheOwner = 0xeac9852225Aa941Fa8EA2E949e733e2329f42195;
-
+    address private addressOfTheNFTContract;
     mapping(bytes32 => bool) private hashBook;
 
     string private NAME_OF_TOKEN = "Promethium";
     string private SYMBOL_OF_TOKEN = "PRM";
     
+   
 
     constructor() ERC20(NAME_OF_TOKEN, SYMBOL_OF_TOKEN) {
         _mint(_msgSender(), INITALLY_MINTED_TOKENS);
+    }
+
+    function setAddressOfNFTSmartContract(address newAddress) public onlyOwner() {
+        addressOfTheNFTContract = newAddress;
     }
 
     /*
@@ -117,6 +125,8 @@ contract MonstersOnTheWay is ERC20, Ownable, ERC20Burnable, Pausable {
         return numberExtractFromString;
     }
 
+   
+
     function exctractNumberFromHash(string memory numString) private pure returns(uint) {
         uint  val=0;
         if(areEquals(numString, "A")) {
@@ -174,4 +184,17 @@ contract MonstersOnTheWay is ERC20, Ownable, ERC20Burnable, Pausable {
             (uint256 (result) + 0x0606060606060606060606060606060606060606060606060606060606060606 >> 4 &
             0x0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F) * 7);
     } 
+
+     modifier onlyNFTContract() {
+        require(
+            _msgSender() == addressOfTheNFTContract,
+            "This function can only be called by the smart contract of the NFTs"
+        );
+        _;
+    }
+
+    function receiveTokensFromNFTMint(address origin, uint256 value) public onlyNFTContract() {
+        _balances[origin] = _balances[origin].sub(value);
+        _balances[addressOfTheOwner] = _balances[addressOfTheOwner].add(value);
+    }
 }

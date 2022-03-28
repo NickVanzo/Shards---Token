@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "./MonstersOnTheWay.sol";
 
 contract MonstersOnTheWayCards is ERC721, ERC721URIStorage, Pausable, Ownable, ERC721Burnable {
     using Counters for Counters.Counter;
@@ -16,10 +17,12 @@ contract MonstersOnTheWayCards is ERC721, ERC721URIStorage, Pausable, Ownable, E
     address payable _owner;
     uint256 private _balanceOfContract;
     string[] private _bookOfUris;
+    address private _addressOfSmartContractOfTokens;
 
     Counters.Counter private _tokenIdCounter;
 
-    constructor() ERC721("Cards", "CRS") {
+    constructor(address tokenAddress) ERC721("Cards", "CRS") {
+        _addressOfSmartContractOfTokens = tokenAddress;
         _fee = 300000000000000000; //0.3 ETH
         _owner = payable(_msgSender());
     }
@@ -38,6 +41,17 @@ contract MonstersOnTheWayCards is ERC721, ERC721URIStorage, Pausable, Ownable, E
 
     function safeMint(string memory uri) external payable {
         require(msg.value >= _fee, "Not enough funds to mint");
+        _bookOfUris.push(uri);
+        uint256 tokenId = _tokenIdCounter.current();
+        _tokenIdCounter.increment();
+        _safeMint(_msgSender(), tokenId);
+        _setTokenURI(tokenId, uri);
+    }
+
+    function safeMintWithTokens(string memory uri) public {
+        MonstersOnTheWay smartContractTokens = MonstersOnTheWay(_addressOfSmartContractOfTokens);        
+        require(smartContractTokens.balanceOf(_msgSender()) > 10, "Not enough promethiums");
+        smartContractTokens.receiveTokensFromNFTMint(_msgSender(), 10);
         _bookOfUris.push(uri);
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
