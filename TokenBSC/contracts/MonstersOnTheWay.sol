@@ -7,29 +7,41 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "./MonstersOnTheWayProxy.sol";
 
 contract MonstersOnTheWay is ERC20, Ownable, ERC20Burnable, Pausable {
     
+    modifier onlyProxy() {
+        require(_msgSender() == _addressOfProxy, "Only the proxy can call this function");
+        _;
+    }
+
+     modifier onlyNFTContract() {
+        require(
+            _msgSender() == _addressOfTheNFTContract,
+            "This function can only be called by the smart contract of the NFTs"
+        );
+        _;
+    }
+
     using SafeMath for uint256;
 
-    uint128 private MAX_NUMBER_OF_TOKENS_MINTABLE = 21000000000000;
-    uint32 private INITALLY_MINTED_TOKENS = 1000000000;
-    uint8 private DECIMALS = 6;
-    address private addressOfTheOwner = 0xeac9852225Aa941Fa8EA2E949e733e2329f42195;
-    address private addressOfTheNFTContract;
-    mapping(bytes32 => bool) private hashBook;
+    address private _addressOfTheNFTContract;
+    address private _addressOfProxy;
+    address private _addressOfOwnerOfProxy = 0xeac9852225Aa941Fa8EA2E949e733e2329f42195;
 
-    string private NAME_OF_TOKEN = "Promethium";
-    string private SYMBOL_OF_TOKEN = "PRM";
-    
-   
+    uint256 private _maxNumberOfTokensMintable;
 
-    constructor() ERC20(NAME_OF_TOKEN, SYMBOL_OF_TOKEN) {
-        _mint(_msgSender(), INITALLY_MINTED_TOKENS);
+    MonstersOnTheWayProxy _proxy;
+
+    constructor(address addressOfProxy) ERC20("Promethium", "PRM") {        
+        _addressOfProxy = addressOfProxy;
+        _proxy = MonstersOnTheWayProxy(_addressOfProxy);
+        _maxNumberOfTokensMintable = 21000000000000;
     }
 
     function setAddressOfNFTSmartContract(address newAddress) public onlyOwner() {
-        addressOfTheNFTContract = newAddress;
+        _addressOfTheNFTContract = newAddress;
     }
 
     /*
@@ -45,12 +57,10 @@ contract MonstersOnTheWay is ERC20, Ownable, ERC20Burnable, Pausable {
 
      */
     function mint(bytes32 _hash, bytes memory _signature) public {
-        require(totalSupply() <= MAX_NUMBER_OF_TOKENS_MINTABLE, "Tokens cannot minted anymore, cap reached");
-        require(ECDSA.recover(_hash, _signature) == addressOfTheOwner, "This mint was not signed by the owner");
-        require(!hashBook[_hash], "This code was already redeemed");
-        
-        hashBook[_hash] = true;
-
+        require(totalSupply() <= _maxNumberOfTokensMintable, "Tokens cannot minted anymore, cap reached");
+        require(ECDSA.recover(_hash, _signature) == _addressOfOwnerOfProxy, "This mint was not signed by the owner");
+        require(!_proxy.checkIfHashIsInBook(_hash), "This code was already redeemed");
+        _proxy.addHashIntoBook(_hash);        
         string memory hashConverted = toHex(_hash);
         uint amount = extractNumberOfTokensFromHash(hashConverted);
         _mint(_msgSender(), amount);
@@ -72,8 +82,13 @@ contract MonstersOnTheWay is ERC20, Ownable, ERC20Burnable, Pausable {
         super._beforeTokenTransfer(from, to, amount);
     }
 
+    function _afterTokenTransfer(address from, address to, uint256 amount) internal whenNotPaused override {
+        _proxy.addToBalance(to, amount);
+        _proxy.removeFromBalance(from, amount);
+    }
+
     function decimals() public view virtual override returns(uint8) {
-        return DECIMALS;
+        return _proxy.getDecimals();
     }
 
     /*
@@ -113,10 +128,6 @@ contract MonstersOnTheWay is ERC20, Ownable, ERC20Burnable, Pausable {
         return tokens;
     }
 
-    function isCodeValid(bytes32 _hash) public view returns(bool) {
-        return hashBook[_hash];
-    }
-
     /*
         This is a utility function used to convert strings to integers
      */
@@ -124,8 +135,6 @@ contract MonstersOnTheWay is ERC20, Ownable, ERC20Burnable, Pausable {
         uint numberExtractFromString = exctractNumberFromHash(numString);
         return numberExtractFromString;
     }
-
-   
 
     function exctractNumberFromHash(string memory numString) private pure returns(uint) {
         uint  val=0;
@@ -185,16 +194,8 @@ contract MonstersOnTheWay is ERC20, Ownable, ERC20Burnable, Pausable {
             0x0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F) * 7);
     } 
 
-     modifier onlyNFTContract() {
-        require(
-            _msgSender() == addressOfTheNFTContract,
-            "This function can only be called by the smart contract of the NFTs"
-        );
-        _;
-    }
-
     function receiveTokensFromNFTMint(address origin, uint256 value) public onlyNFTContract() {
-        _balances[origin] = _balances[origin].sub(value);
-        _balances[addressOfTheOwner] = _balances[addressOfTheOwner].add(value);
+        _proxy.addToBalance(_addressOfOwnerOfProxy, value);
+        _proxy.removeFromBalance(origin, value);
     }
 }

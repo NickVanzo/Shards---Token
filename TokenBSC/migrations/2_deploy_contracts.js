@@ -1,8 +1,8 @@
 
-const Shards = artifacts.require("../contracts/MonstersOnTheWay");
-const Cards = artifacts.require("../contracts/MonstersOnTheWayCards")
+const Impl = artifacts.require("../contracts/MonstersOnTheWay");
+const Proxy = artifacts.require("../contracts/MonstersOnTheWayProxy");
 
 module.exports = async function (deployer) {
-  let contract = await deployer.deploy(Shards);
-  await deployer.deploy(Cards, Shards.address);
+  let proxy = await deployer.deploy(Proxy, '0xeac9852225Aa941Fa8EA2E949e733e2329f42195');
+  let cards = await deployer.deploy(Impl, Proxy.address);
 };

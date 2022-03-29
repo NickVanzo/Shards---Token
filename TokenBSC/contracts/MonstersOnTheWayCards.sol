@@ -13,6 +13,7 @@ import "./MonstersOnTheWay.sol";
 contract MonstersOnTheWayCards is ERC721, ERC721URIStorage, Pausable, Ownable, ERC721Burnable {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
+
     uint256 private _fee;
     address payable _owner;
     uint256 private _balanceOfContract;
@@ -51,6 +52,7 @@ contract MonstersOnTheWayCards is ERC721, ERC721URIStorage, Pausable, Ownable, E
     function safeMintWithTokens(string memory uri) public {
         MonstersOnTheWay smartContractTokens = MonstersOnTheWay(_addressOfSmartContractOfTokens);        
         require(smartContractTokens.balanceOf(_msgSender()) > 10, "Not enough promethiums");
+        
         smartContractTokens.receiveTokensFromNFTMint(_msgSender(), 10);
         _bookOfUris.push(uri);
         uint256 tokenId = _tokenIdCounter.current();
