@@ -19,25 +19,22 @@ contract MonstersOnTheWayProxy is Ownable, Pausable {
     using SafeMath for uint256;
 
     uint128 private _MAX_NUMBER_OF_TOKENS_MINTABLE = 21000000000000;
-    uint32 private _INITALLY_MINTED_TOKENS = 1000000000;
     uint8 private _DECIMALS = 6;
     
     address private _addressOfTheNFTContract;
     address private _addrOfImplementation;
+    
     mapping(bytes32 => bool) private _hashBook;
     mapping(address => uint256) private _balances;
 
     string private _NAME_OF_TOKEN = "Promethium";
     string private _SYMBOL_OF_TOKEN = "PRM";
 
-    MonstersOnTheWay implementation;
-
-    constructor(address addressOfImplementation) {
-        implementation = MonstersOnTheWay(addressOfImplementation);        
-    }
+    MonstersOnTheWay _implementation;
 
     function setAddrOfImplementation(address addrImpl) public onlyOwner() {
         _addrOfImplementation = addrImpl;
+        _implementation = MonstersOnTheWay(addrImpl);     
     }
 
     function addToBalance(address to, uint256 value) public onlyImplementation() {
@@ -70,5 +67,17 @@ contract MonstersOnTheWayProxy is Ownable, Pausable {
 
     function getDecimals() public view returns(uint8) {
         return _DECIMALS;
+    }
+
+    function getBalance(address addr) public view returns(uint256) {
+        return _balances[addr];
+    }
+
+    function getAddressOfImplementation() public view returns(address) {
+        return _addrOfImplementation;
+    }
+
+    function getVersionOfImplementation() public view returns(string memory) {
+        return _implementation.getVersion();
     }
 }

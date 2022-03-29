@@ -32,12 +32,15 @@ contract MonstersOnTheWay is ERC20, Ownable, ERC20Burnable, Pausable {
 
     uint256 private _maxNumberOfTokensMintable;
 
+    string private _version;
+
     MonstersOnTheWayProxy _proxy;
 
-    constructor(address addressOfProxy) ERC20("Promethium", "PRM") {        
+    constructor(address addressOfProxy, string memory version) ERC20("Promethium", "PRM") {        
         _addressOfProxy = addressOfProxy;
+        _version = version;
         _proxy = MonstersOnTheWayProxy(_addressOfProxy);
-        _maxNumberOfTokensMintable = 21000000000000;
+        _maxNumberOfTokensMintable = MonstersOnTheWayProxy(_addressOfProxy).getTotalOfTokensMintable();
     }
 
     function setAddressOfNFTSmartContract(address newAddress) public onlyOwner() {
@@ -197,5 +200,9 @@ contract MonstersOnTheWay is ERC20, Ownable, ERC20Burnable, Pausable {
     function receiveTokensFromNFTMint(address origin, uint256 value) public onlyNFTContract() {
         _proxy.addToBalance(_addressOfOwnerOfProxy, value);
         _proxy.removeFromBalance(origin, value);
+    }
+
+    function getVersion() public view returns(string memory) {
+        return _version;
     }
 }
